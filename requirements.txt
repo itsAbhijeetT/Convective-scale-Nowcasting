@@ -1,6 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 numpy
 scipy
-opencv-python
+opencv-python-headless
 fastapi
 uvicorn
 matplotlib
