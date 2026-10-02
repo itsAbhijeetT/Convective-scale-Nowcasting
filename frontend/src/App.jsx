@@ -29,7 +29,7 @@ export default function App() {
 
   const fetchAlerts = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/alerts');
+      const res = await fetch('/api/alerts');
       const data = await res.json();
       setAlerts(data);
     } catch (e) {
@@ -39,7 +39,7 @@ export default function App() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/metrics');
+      const res = await fetch('/api/metrics');
       const data = await res.json();
       
       const chartData = data.lead_times.map((lt, i) => ({
