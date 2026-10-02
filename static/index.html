@@ -138,6 +138,41 @@
         
         #chart-container { height: 220px; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(14, 165, 233, 0.1); }
         
+        /* FAQ Styles */
+        .faq-section { margin-top: 20px; padding-top: 20px; padding-bottom: 20px; border-top: 2px solid rgba(14, 165, 233, 0.1); }
+        .faq-item { margin-bottom: 10px; border: 1px solid rgba(14, 165, 233, 0.1); border-radius: 8px; }
+        .faq-question { 
+            background: rgba(241, 245, 249, 0.7); 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            color: #0f172a; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 0.95em;
+            transition: background 0.2s;
+        }
+        .faq-question:hover { background: rgba(226, 232, 240, 0.8); }
+        .faq-answer { 
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            color: #475569; 
+            font-size: 0.9em; 
+            line-height: 1.5;
+            background: rgba(255, 255, 255, 0.5);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .faq-item.active .faq-answer {
+            padding: 12px 15px;
+            max-height: 200px; /* Arbitrary large height to allow expansion */
+        }
+        .faq-item.active .faq-question { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        
         .header-buttons { display: flex; gap: 10px; margin-bottom: 25px; }
         
         /* Leaflet popup light theme */
@@ -150,6 +185,180 @@
         #panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
         #panel::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.4); border-radius: 10px; }
         #panel::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.7); }
+
+        /* Chatbot Styles */
+        #chat-widget-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 2000;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #chat-widget-btn:hover { transform: scale(1.1); }
+        
+        #chat-window {
+            position: absolute;
+            bottom: 100px;
+            left: 30px;
+            width: 340px;
+            height: 450px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            animation: chatSlideIn 0.3s ease-out;
+        }
+        @keyframes chatSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .chat-header {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1em;
+        }
+        .chat-header button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.02); }
+        .chat-body::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 6px; }
+
+        .chat-msg {
+            padding: 12px 16px;
+            border-radius: 14px;
+            max-width: 85%;
+            font-size: 0.9em;
+            line-height: 1.4;
+            animation: fadeIn 0.3s;
+        }
+        .chat-msg.bot {
+            background: #f1f5f9;
+            color: #1e293b;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .chat-msg.user {
+            background: #0ea5e9;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 2px 5px rgba(14,165,233,0.2);
+        }
+
+        .chat-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 15px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+        .chat-option {
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chat-option:hover {
+            background: #bae6fd;
+            transform: translateY(-1px);
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px 15px;
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            gap: 10px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            outline: none;
+            font-family: inherit;
+        }
+        .chat-input-area input:focus { border-color: #0ea5e9; }
+        .chat-input-area button {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .chat-input-area button:hover { background: #0284c7; transform: scale(1.05); }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            font-size: 0.9em;
+            color: #64748b;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: #94a3b8;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -177,6 +386,53 @@
         
         <div id="chart-container">
             <canvas id="metricsChart"></canvas>
+        </div>
+
+        <div class="faq-section">
+            <h3 style="margin-top:0; color:#0369a1; font-weight:700; margin-bottom: 15px;">Frequently Asked Questions</h3>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">What is Nowcasting? <span class="icon">+</span></div>
+                <div class="faq-answer">Nowcasting is the detailed, short-term prediction (0-6 hours) of rapidly evolving weather phenomena like severe thunderstorms, heavy rainfall, and hail.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Where does the data come from? <span class="icon">+</span></div>
+                <div class="faq-answer">Currently, this prototype uses synthetic storm simulations for demonstration. The final version will ingest live IMD Doppler Weather Radar (DWR) and satellite data.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">What do the map colors indicate? <span class="icon">+</span></div>
+                <div class="faq-answer">
+                    <strong>Green:</strong> Light to moderate rain (10-30 dBZ).<br>
+                    <strong>Yellow:</strong> Heavy rain (30-40 dBZ).<br>
+                    <strong>Red:</strong> Severe thunderstorms (40-50 dBZ).<br>
+                    <strong>Purple:</strong> Extreme weather/Hail (>50 dBZ).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <button id="chat-widget-btn" onclick="toggleChat()">💬</button>
+    <div id="chat-window">
+        <div class="chat-header">
+            <span>Nowcast Assistant</span>
+            <button onclick="toggleChat()">&times;</button>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="chat-msg bot">Hello! I'm your Nowcast Assistant. How can I help you today?</div>
+            <div class="typing-indicator" id="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="chat-options">
+            <div class="chat-option" onclick="sendChat('What is this dashboard for?')">What is this dashboard for?</div>
+            <div class="chat-option" onclick="sendChat('Map colors meaning?')">Map colors meaning?</div>
+            <div class="chat-option" onclick="sendChat('How accurate is this?')">How accurate is this?</div>
+            <div class="chat-option" onclick="sendChat('Refresh alerts')">Refresh alerts 🔄</div>
+            <div class="chat-option" onclick="sendChat('Play sequence')">Play sequence ▶</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') handleUserInput()">
+            <button onclick="handleUserInput()">➤</button>
         </div>
     </div>
 
@@ -383,6 +639,98 @@
 
         fetchAlerts();
         initChart();
+
+        // Chatbot Logic
+        function toggleChat() {
+            const chatWin = document.getElementById('chat-window');
+            if(chatWin.style.display === 'flex') {
+                chatWin.style.display = 'none';
+            } else {
+                chatWin.style.display = 'flex';
+            }
+        }
+
+        function handleUserInput() {
+            const input = document.getElementById('chat-input');
+            const val = input.value.trim();
+            if(val) {
+                sendChat(val);
+                input.value = '';
+            }
+        }
+
+        function sendChat(question) {
+            const chatBody = document.getElementById('chat-body');
+            const indicator = document.getElementById('typing-indicator');
+            
+            // Append User Question before the typing indicator
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-msg user';
+            userMsg.innerText = question;
+            chatBody.insertBefore(userMsg, indicator);
+            
+            // Show typing indicator
+            indicator.style.display = 'block';
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // Generate Bot Answer based on predefined questions
+            setTimeout(() => {
+                indicator.style.display = 'none'; // hide typing
+                
+                let answer = "I'm not sure how to answer that. You can try asking about the dashboard, alerts, or try typing 'Refresh' or 'Play'.";
+                let action = null;
+                const qLower = question.toLowerCase();
+
+                if(qLower.includes('what') && qLower.includes('dashboard')) {
+                    answer = "This is a Convective-scale Nowcasting Prototype. It predicts localized weather hazards like thunderstorms, hail, and cloudbursts up to 6 hours in advance.";
+                } else if(qLower.includes('how') && qLower.includes('map')) {
+                    answer = "Use the slider at the bottom to view predictions for different timeframes. The right panel shows active alerts and metrics.";
+                } else if(qLower.includes('cloudburst')) {
+                    answer = "A Cloudburst alert indicates extreme localized rainfall (≥100 mm/hr) over a small area. This is highly likely to cause sudden flash floods.";
+                } else if(qLower.includes('real data') || qLower.includes('synthetic')) {
+                    answer = "Currently, this dashboard uses a synthetic storm generator for demonstration purposes. In the future, it will integrate real data from IMD DWR radars.";
+                } else if(qLower.includes('color')) {
+                    answer = "Green is light rain, Yellow is heavy rain, Red is severe thunderstorms, and Purple indicates extreme weather or hail.";
+                } else if(qLower.includes('accurat') || qLower.includes('accuracy')) {
+                    answer = "Predictions are very reliable for the first 1-2 hours, but uncertainty naturally increases as lead time stretches towards 6 hours. You can see the actual AI performance in the chart below the alerts!";
+                } else if(qLower.includes('refresh')) {
+                    answer = "Sure, I'll fetch the latest alerts for you right now!";
+                    action = () => fetchAlerts();
+                } else if(qLower.includes('play')) {
+                    answer = "Starting the forecast animation for you.";
+                    action = () => { if(playBtn.innerText.includes('Play')) playBtn.click(); };
+                } else if(qLower.includes('pause') || qLower.includes('stop')) {
+                    answer = "Paused the forecast animation.";
+                    action = () => { if(playBtn.innerText.includes('Pause')) playBtn.click(); };
+                } else if(qLower.includes('hello') || qLower.includes('hi')) {
+                    answer = "Hello! I'm here to help you navigate the Nowcasting Dashboard.";
+                }
+
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-msg bot';
+                botMsg.innerText = answer;
+                chatBody.insertBefore(botMsg, indicator);
+                
+                chatBody.scrollTop = chatBody.scrollHeight;
+                
+                // Execute dynamic action if any
+                if(action) setTimeout(action, 500);
+
+            }, 1000 + Math.random() * 800); // 1-1.8s delay for typing simulation
+        }
+        
+        // FAQ Logic
+        function toggleFaq(element) {
+            const parent = element.parentElement;
+            const icon = element.querySelector('.icon');
+            if (parent.classList.contains('active')) {
+                parent.classList.remove('active');
+                icon.innerText = '+';
+            } else {
+                parent.classList.add('active');
+                icon.innerText = '-';
+            }
+        }
     </script>
 </body>
 </html>
