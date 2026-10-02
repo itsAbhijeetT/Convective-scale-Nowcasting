@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nowcast Dashboard</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; color: #1e293b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        
+        #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        /* Light Glassmorphism Panel on the right */
+        #panel { 
+            position: absolute; 
+            top: 0; 
+            right: 0; 
+            width: 420px; 
+            height: 100%; 
+            padding: 25px; 
+            box-sizing: border-box; 
+            overflow-y: auto; 
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Light Glassmorphism Bottom Controls */
+        .controls { 
+            position: absolute; 
+            bottom: 30px; 
+            left: calc(50% - 210px); 
+            transform: translateX(-50%); 
+            z-index: 1000; 
+            padding: 15px 30px; 
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+        }
+        
+        .btn { 
+            padding: 10px 20px; 
+            background: #0ea5e9; /* Skyblue */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);
+        }
+        .btn:hover { 
+            background: #0284c7; 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(14, 165, 233, 0.4);
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-demo { background: #8b5cf6; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2); }
+        .btn-demo:hover { background: #7c3aed; box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4); }
+        
+        input[type=range] { 
+            width: 250px; 
+            cursor: pointer; 
+            accent-color: #0ea5e9; 
+        }
+        #timeLabel { font-size: 1.15em; font-weight: bold; color: #0369a1; width: 90px; }
+        
+        h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid rgba(14, 165, 233, 0.2); padding-bottom: 15px; font-size: 1.6rem; font-weight: 800; letter-spacing: 0.5px; }
+        
+        /* Light Glassmorphism Alert Cards */
+        .alert-card { 
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 16px; 
+            margin-bottom: 15px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-left: 5px solid #0ea5e9; 
+            transition: all 0.3s; 
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .alert-card:hover { 
+            transform: translateX(-5px); 
+            background: #ffffff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+        }
+        .hazard-extreme { border-left-color: #ef4444; background: rgba(254, 226, 226, 0.6); }
+        .hazard-moderate { border-left-color: #f59e0b; }
+        .hazard-high { border-left-color: #f97316; }
+        
+        .alert-title { display: flex; justify-content: space-between; align-items: center; font-size: 1.15em; font-weight: 800; margin-bottom: 10px; color: #1e293b; }
+        .alert-badge { background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid #7dd3fc; }
+        .badge-extreme { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        .badge-moderate { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+        .badge-high { background: #ffedd5; color: #c2410c; border-color: #fdba74; }
+        
+        .alert-props { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; color: #475569; margin-bottom: 12px; }
+        .alert-props span { background: rgba(255, 255, 255, 0.8); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.05); display: flex; align-items: center; }
+        .alert-advisory { font-size: 0.85em; color: #334155; background: #f0f9ff; padding: 10px; border-radius: 8px; border-left: 3px solid #38bdf8; line-height: 1.4; }
+        
+        /* Toast Notifications */
+        #toast-container { position: absolute; top: 25px; left: calc(50% - 210px); transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { 
+            background: rgba(255, 255, 255, 0.95); 
+            color: #1e293b; 
+            padding: 14px 24px; 
+            border-radius: 12px; 
+            border-left: 4px solid #0ea5e9; 
+            border-right: 1px solid rgba(0,0,0,0.05);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+            backdrop-filter: blur(10px); 
+            transform: translateY(-20px); 
+            opacity: 0; 
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+            font-weight: 600; 
+            letter-spacing: 0.3px;
+        }
+        @keyframes slideIn { to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Weather Radar Canvas overlay - use normal blending on light map */
+        canvas.map-overlay { opacity: 0.65; } 
+        
+        #chart-container { height: 220px; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(14, 165, 233, 0.1); }
+        
+        .header-buttons { display: flex; gap: 10px; margin-bottom: 25px; }
+        
+        /* Leaflet popup light theme */
+        .leaflet-popup-content-wrapper { background: rgba(255, 255, 255, 0.95); color: #1e293b; border: 1px solid rgba(14, 165, 233, 0.2); backdrop-filter: blur(8px); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .leaflet-popup-tip { background: rgba(255, 255, 255, 0.95); }
+        .leaflet-popup-content { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 15px; }
+        
+        /* Custom scrollbar for panel */
+        #panel::-webkit-scrollbar { width: 8px; }
+        #panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
+        #panel::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.4); border-radius: 10px; }
+        #panel::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.7); }
+    </style>
+</head>
+<body>
+    <div id="toast-container"></div>
+    <div id="map"></div>
+    <div class="controls">
+        <button class="btn" id="playBtn">▶ Play</button>
+        <input type="range" id="slider" min="1" max="36" value="1">
+        <span id="timeLabel">T+10 min</span>
+    </div>
+    
+    <div id="panel">
+        <h2>Nowcast Dashboard</h2>
+        <div class="header-buttons">
+            <button class="btn btn-demo" onclick="demoMode()">🌪️ Cloudburst Demo</button>
+            <button class="btn" onclick="fetchAlerts()">🔄 Refresh</button>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h3 style="margin:0; color:#0369a1; font-weight:700;">Active Threats</h3>
+            <span id="alertCount" style="background:#e0f2fe; color:#0284c7; border: 1px solid #bae6fd; padding:3px 12px; border-radius:15px; font-size:0.85em; font-weight:800;">0</span>
+        </div>
+        
+        <div id="alerts"></div>
+        
+        <div id="chart-container">
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        var map = L.map('map', { zoomControl: false }).setView([30.2, 78.1], 9);
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '© Google Maps'
+        }).addTo(map);
+
+        var bounds = [[29.8, 77.6], [30.6, 78.6]];
+        var imageOverlay = null;
+        var hazardLayer = L.layerGroup().addTo(map);
+
+        const slider = document.getElementById('slider');
+        const timeLabel = document.getElementById('timeLabel');
+        const playBtn = document.getElementById('playBtn');
+        let playInterval = null;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if(type === 'error') toast.style.borderLeftColor = '#ef4444';
+            if(type === 'success') toast.style.borderLeftColor = '#10b981';
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.4s forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function renderGrid(gridData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const imgData = ctx.createImageData(64, 64);
+            
+            for (let i = 0; i < gridData.length; i++) {
+                for (let j = 0; j < gridData[i].length; j++) {
+                    const dbz = gridData[i][j];
+                    const idx = (i * 64 + j) * 4;
+                    let r=0, g=0, b=0, a=0;
+                    if (dbz > 10) {
+                        a = 160;
+                        if (dbz > 50) { r=168; g=85; b=247; } // purple
+                        else if (dbz > 40) { r=239; g=68; b=68; } // red
+                        else if (dbz > 30) { r=234; g=179; b=8; } // yellow
+                        else { r=34; g=197; b=94; } // green
+                    }
+                    imgData.data[idx] = r; imgData.data[idx+1] = g;
+                    imgData.data[idx+2] = b; imgData.data[idx+3] = a;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            
+            if (imageOverlay) map.removeLayer(imageOverlay);
+            imageOverlay = L.imageOverlay(canvas.toDataURL(), bounds, {className: 'map-overlay'}).addTo(map);
+        }
+
+        async function updateMap(leadStep) {
+            timeLabel.innerText = `T+${leadStep * 10} min`;
+            
+            const res = await fetch(`/api/nowcast?lead=${leadStep}`);
+            if(res.ok) {
+                const data = await res.json();
+                if(data.grid) renderGrid(data.grid);
+            }
+            
+            const hRes = await fetch(`/api/hazards?lead=${leadStep}`);
+            if(hRes.ok) {
+                const hData = await hRes.json();
+                hazardLayer.clearLayers();
+                hData.features.forEach(f => {
+                    const props = f.properties;
+                    let color = '#0ea5e9'; // Skyblue default
+                    if (props.type === 'Cloudburst') color = '#ef4444';
+                    else if (props.type === 'Hail') color = '#a855f7';
+                    
+                    const popupContent = `
+                        <div>
+                            <strong style="color:${color}; font-size:1.25em; display:block; margin-bottom:5px;">${props.type}</strong>
+                            <div style="color:#475569; font-size:0.95em; margin-bottom:8px;">Severity: <b style="color:#0f172a">${props.severity}</b></div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                                <div style="background:#f1f5f9; padding:6px; border-radius:6px; font-size:0.9em; text-align:center;">Peak: <br><b style="color:#0f172a">${props.peak_dbz.toFixed(1)} dBZ</b></div>
+                                <div style="background:#f1f5f9; padding:6px; border-radius:6px; font-size:0.9em; text-align:center;">Prob: <br><b style="color:#0f172a">${(props.probability * 100).toFixed(0)}%</b></div>
+                            </div>
+                            <div style="background:#f0f9ff; border-left:3px solid ${color}; padding:10px; font-size:0.9em; color:#0f172a; border-radius:6px;">
+                                <i>${props.advisory}</i>
+                            </div>
+                        </div>
+                    `;
+                    
+                    L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
+                        radius: props.type === 'Cloudburst' ? 12 : 8,
+                        color: color, fillColor: color, fillOpacity: 0.6, weight: 2
+                    }).bindPopup(popupContent).addTo(hazardLayer);
+                });
+            }
+        }
+
+        slider.oninput = () => updateMap(slider.value);
+
+        playBtn.onclick = () => {
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+                playBtn.innerHTML = '▶ Play';
+                showToast("Playback paused", "info");
+            } else {
+                playBtn.innerHTML = '⏸ Pause';
+                showToast("Playing forecast sequence", "success");
+                playInterval = setInterval(() => {
+                    let v = parseInt(slider.value) + 1;
+                    if(v > 36) v = 1;
+                    slider.value = v;
+                    updateMap(v);
+                }, 500);
+            }
+        };
+
+        async function fetchAlerts() {
+            const res = await fetch('/api/alerts');
+            if(res.ok) {
+                const alerts = await res.json();
+                const container = document.getElementById('alerts');
+                document.getElementById('alertCount').innerText = alerts.length;
+                
+                if (alerts.length === 0) {
+                    container.innerHTML = '<div style="color:#0284c7; background:#e0f2fe; border:1px dashed #7dd3fc; padding:20px; border-radius:10px; text-align:center; font-weight:600;">No active threats detected</div>';
+                } else {
+                    container.innerHTML = alerts.map(a => {
+                        let severityClass = 'hazard-moderate';
+                        let badgeClass = 'badge-moderate';
+                        if(a.severity === 'Extreme') { severityClass = 'hazard-extreme'; badgeClass = 'badge-extreme'; }
+                        else if(a.severity === 'High') { severityClass = 'hazard-high'; badgeClass = 'badge-high'; }
+                        
+                        return `
+                        <div class="alert-card ${severityClass}" onclick="slider.value=${a.eta_minutes/10}; updateMap(${a.eta_minutes/10});">
+                            <div class="alert-title">
+                                <span>${a.type}</span>
+                                <span class="alert-badge ${badgeClass}">${a.severity}</span>
+                            </div>
+                            <div class="alert-props">
+                                <span>⏱️ ETA: T+${a.eta_minutes}m</span>
+                                <span>🎯 Prob: ${(a.probability*100).toFixed(0)}%</span>
+                                <span>🌩️ Peak: ${a.peak_dbz.toFixed(1)} dBZ</span>
+                                <span>📍 ${a.lat.toFixed(2)}, ${a.lon.toFixed(2)}</span>
+                            </div>
+                            <div class="alert-advisory">
+                                ${a.advisory}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                    showToast(`Loaded ${alerts.length} active alerts`);
+                }
+            }
+            updateMap(slider.value);
+        }
+
+        async function initChart() {
+            const res = await fetch('/api/metrics');
+            if(res.ok) {
+                const data = await res.json();
+                if(!data.lead_times) return;
+                
+                Chart.defaults.color = '#64748b';
+                Chart.defaults.borderColor = '#e2e8f0';
+                
+                new Chart(document.getElementById('metricsChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.lead_times,
+                        datasets: [
+                            {label: 'Blend CSI', data: data.blend_csi, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.15)', fill: true, tension: 0.4, pointBackgroundColor: '#0ea5e9'},
+                            {label: 'Flow CSI', data: data.flow_csi, borderColor: '#10b981', tension: 0.4, pointBackgroundColor: '#10b981'},
+                            {label: 'Persist CSI', data: data.persistence_csi, borderColor: '#94a3b8', tension: 0.4, pointBackgroundColor: '#94a3b8'}
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#334155', font: { weight: 'bold' } } } },
+                        scales: { 
+                            y: { beginAtZero: true, max: 1, grid: { color: '#f1f5f9' } },
+                            x: { grid: { color: '#f1f5f9' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        async function demoMode() {
+            const res = await fetch('/api/demo', {method: 'POST'});
+            if(res.ok) {
+                showToast("🌩️ Demo Mode Activated!", "error");
+                slider.value = 1;
+                fetchAlerts();
+            }
+        }
+
+        fetchAlerts();
+        initChart();
+    </script>
+</body>
+</html>
